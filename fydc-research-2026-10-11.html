@@ -3142,8 +3142,6 @@
     ranking.setAttribute('aria-label','点赞排行榜');
     var recentBody=RECENT_PERIODS.length?'<div class="like-ranking-list like-ranking-recent" aria-live="polite"><div class="like-ranking-empty">正在读取近期功能总排行…</div></div>':'<div class="like-ranking-empty">暂无近期数据<br>点赞功能自本期开始累计</div>';
     ranking.innerHTML='<div class="like-ranking-grid"><section class="like-ranking-board" aria-labelledby="like-current-title"><div class="like-ranking-board-head"><h4 class="like-ranking-board-title" id="like-current-title">本期排行</h4></div><div class="like-ranking-list like-ranking-current" aria-live="polite"></div></section><section class="like-ranking-board" aria-labelledby="like-history-title"><div class="like-ranking-board-head"><h4 class="like-ranking-board-title" id="like-history-title">近期排行</h4></div>'+recentBody+'</section></div>';
-    var historyTitle=ranking.querySelector('#like-history-title');
-    if(historyTitle&&RECENT_PERIODS.length){var labels=RECENT_PERIODS.map(function(period){return period.short||period.label;}).filter(Boolean);historyTitle.textContent='近期排行 · '+labels.join(' + ')+' + 本期';}
     overview.insertAdjacentElement('afterend',ranking);
   }
   function renderRecentRanking(currentData,periodData){
@@ -3159,7 +3157,7 @@
     var keyOf=function(brand,name){return brand+'\u0000'+name;};
     cards.forEach(function(card,index){
       var brand=card.getAttribute('data-brand')||'',full=cleanFeatureName(card),prefix=brand+'「',name=full.indexOf(prefix)===0&&full.slice(-1)==='」'?full.slice(prefix.length,-1):full;
-      var base=keyOf(brand,name),entry={brand:brand,name:name,currentCount:currentCounts[card.getAttribute('data-fid')]||0,periodCounts:Object.create(null),order:index,href:'#'+card.getAttribute('data-fid')};
+      var base=keyOf(brand,name),entry={brand:brand,name:name,currentCount:currentCounts[card.getAttribute('data-fid')]||0,periodCounts:Object.create(null),order:index,href:'#'+card.getAttribute('data-fid'),isCurrent:true};
       entries.push(entry);(currentByKey[base]||(currentByKey[base]=[])).push(entry);
     });
     for(var pidx=0;pidx<RECENT_PERIODS.length;pidx++){
@@ -3184,7 +3182,7 @@
     list.innerHTML='';
     entries.forEach(function(entry,index){
       var total=totalOf(entry),link=document.createElement('a');link.className='like-rank-item';link.href=entry.href;
-      var detail=RECENT_PERIODS.map(function(period){var key=period.short||period.label||period.report_id;return key+' '+String(entry.periodCounts[key]||0);});detail.push('本期 '+String(entry.currentCount));
+      var detail=RECENT_PERIODS.filter(function(period){var key=period.short||period.label||period.report_id;return Object.prototype.hasOwnProperty.call(entry.periodCounts,key);}).map(function(period){return period.short||period.label||period.report_id;});if(entry.isCurrent)detail.push('本期');
       link.setAttribute('aria-label','第 '+String(index+1)+' 名，'+entry.brand+'「'+entry.name+'」，'+detail.join('，')+'，合计 '+total+' 赞');
       link.innerHTML='<span class="like-rank-no"><span></span></span><span class="like-rank-main"><span class="like-rank-name"></span></span><span class="like-rank-meta"></span><span class="like-rank-score"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S4 15.55 4 9.35C4 6.4 5.82 4.5 8.35 4.5c1.47 0 2.86-.75 3.65-1.94.79 1.19 2.18 1.94 3.65 1.94C18.18 4.5 20 6.4 20 9.35c0 6.2-8 11.15-8 11.15Z"/></svg><span></span></span>';
       var rankNumber=String(index+1),rankNo=link.querySelector('.like-rank-no');rankNo.setAttribute('data-digits',String(rankNumber.length));rankNo.querySelector('span').textContent=rankNumber;
